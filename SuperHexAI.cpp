@@ -39,8 +39,8 @@ int main()
 	printf("offset = %x\n", pSuperhex - dwBaseAddr);
 
 	// spin until ingame
-	int gameover3 = 1;
-	for (; gameover3; RPM((DWORD)pSuperhex + (DWORD)offsetof(superhex_t, gamestate.gameover3), gameover3))
+	int stage = 1;
+	for (; stage == 1; RPM((DWORD)pSuperhex + (DWORD)offsetof(superhex_t, gamestate.stage), stage))
 	{
 		Sleep(100);
 	}
@@ -48,11 +48,12 @@ int main()
 	bool lDown, rDown;
 	while (true)
 	{
+		WPM_val(pSuperhex + offsetof(superhex_t, gamestate.baseRotation), 0);
 		if (GetAsyncKeyState(VK_F7)) 
 			break;
 		superhex_t superhex;
 		RPM_size(pSuperhex, superhex, offsetof(superhex_t, gamestate)+sizeof(gamestate_t));
-		if (superhex.gamestate.gameover3)
+		if (superhex.gamestate.gameover2 || superhex.gamestate.gameover || superhex.gamestate.stage == -1)
 		{
 			Sleep(100);
 			continue;
@@ -67,62 +68,74 @@ int main()
 		for (int i = 0; i < superhex.gamestate.wallCnt; i++)
 		{
 			wall_t wall = superhex.gamestate.walls[i];
-			if (!wall.checkCollisions || wall.distance == 0)
+			if (!wall.checkCollisions)
 				continue;
-			if (wall.distance < distances[wall.section])
+			int farDist = wall.distance + wall.width; // wall range from wall.distance to wall.distance + width
+			// 150 is critical distance
+			if (wall.distance <= 150 && farDist >= 150) // second conditional redundant tbh; width always >0
+			{
+				distances[wall.section] = 150; // its impeded do not go here.
+			}
+			else if (wall.distance < distances[wall.section])
+			{
 				distances[wall.section] = wall.distance;
+			}
 		}
-		for (int i = 0; i < 6;i++)
-			printf("%d ", distances[i]);
-		printf("\n");
 
 		float best = -1;
 		int dist = -1;
+		printf("%d ", (int)playerSection);
 		for (int i = 0; i < sides; i++)
 		{
-			if (distances[i] == 999999)
+			//if (distances[i] == 999999) // no walls found in this section, let's go here!
+			//{
+			//	best = i + 0.5f;
+			//	break;
+			//}
+			float ccwDist = fmodf(i + .5f - playerSection, sides); // sections numbered counterclockwise
+			float cwDist = fmodf(playerSection - i - .5f, sides);
+			if (ccwDist < 0.f) ccwDist += 6.f; // are you fucking kidding me
+			if (cwDist < 0.f) cwDist += 6.f;
+			int weightedDist = distances[i] - fminf(ccwDist, cwDist);
+			printf("%d ", (int)fminf(ccwDist, cwDist));
+			if (best == -0.5f || weightedDist > dist)// || (delta == 0 && fmodf(i - playerSection, 6.f) < fmodf(best - playerSection, 6.f)))
 			{
-				best = i + 0.5f;
-				break;
-			}
-			int delta = distances[i] - dist;
-			if (best == -0.5f || delta > 0)// || (delta == 0 && fmodf(i - playerSection, 6.f) < fmodf(best - playerSection, 6.f)))
-			{
-				dist = distances[i];
+				dist = weightedDist;
 				best = i + 0.5f;
 			}
-		}
+		}	
+		printf("\n");
 		//WPM_val(pSuperhex + offsetof(struct superhex, gamestate.baseRotation), 0);
 		if (best != -0.5f && fabsf(best - playerSection) > 0.1f)
 		{
-			float ccwDist = fmodf(best - playerSection, 6.f);
+			float ccwDist = fmodf(best - playerSection, 6.f); // sections numbered counterclockwise
 			float cwDist = fmodf(playerSection - best, 6.f);
 			if (ccwDist < 0.f) ccwDist += 6.f; // are you fucking kidding me
 			if (cwDist < 0.f) cwDist += 6.f;
-			//printf("%f %f %f %f\n", best, playerSection, cwDist, ccwDist);
-			if (cwDist <= ccwDist)
+			if (cwDist <= ccwDist) // r = clockwise, l = CCW
 			{
 				rDown = true;
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)1);
-				//if (lDown)
-				//	WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+				if (lDown)
+					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
 			}
 			else
 			{
 				lDown = true;
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)1);
-				//if (rDown)
-				//	WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+				if (rDown)
+					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
 			}
 			
 		}
 		else
 		{
-			//if (lDown)
-			//	WPM_val(pSuperhex + 0x429C0, (char)0);
-			//if (rDown)
-			//	WPM_val(pSuperhex + 0x429C2, (char)0);
+			if (lDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+			if (rDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
 		}
+		Sleep(5);
 	}
 
 	CloseHandle(hProcess);
