@@ -38,7 +38,13 @@ int main()
 	printf("pSuperhex = %x\n", pSuperhex);
 	printf("offset = %x\n", pSuperhex - dwBaseAddr);
 
-	_getwch();
+	// spin until ingame
+	int gameover3 = 1;
+	for (; gameover3; RPM((DWORD)pSuperhex + (DWORD)offsetof(superhex_t, gamestate.gameover3), gameover3))
+	{
+		Sleep(100);
+	}
+
 	bool lDown, rDown;
 	while (true)
 	{
@@ -46,8 +52,11 @@ int main()
 			break;
 		superhex_t superhex;
 		RPM_size(pSuperhex, superhex, offsetof(superhex_t, gamestate)+sizeof(gamestate_t));
-		if (superhex.gamestate.gameover2)
-			break;
+		if (superhex.gamestate.gameover3)
+		{
+			Sleep(100);
+			continue;
+		}
 
 		int sides = superhex.gamestate.axisCount;
 		float playerSection = (superhex.gamestate.playerRotation + superhex.gamestate.velocity) * sides / 360.f;
@@ -95,24 +104,24 @@ int main()
 			{
 				rDown = true;
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)1);
-				if (lDown)
-					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+				//if (lDown)
+				//	WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
 			}
 			else
 			{
 				lDown = true;
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)1);
-				if (rDown)
-					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+				//if (rDown)
+				//	WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
 			}
 			
 		}
 		else
 		{
-			if (lDown)
-				WPM_val(pSuperhex + 0x429C0, (char)0);
-			if (rDown)
-				WPM_val(pSuperhex + 0x429C2, (char)0);
+			//if (lDown)
+			//	WPM_val(pSuperhex + 0x429C0, (char)0);
+			//if (rDown)
+			//	WPM_val(pSuperhex + 0x429C2, (char)0);
 		}
 	}
 

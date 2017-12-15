@@ -57,14 +57,16 @@ struct gamestate_t
 	int playerRotation2;
 	int velocity;
 	int pad;
-	int gameover2; // this is the useful one
-	char pad03[32];
+	int gameover2; // immediate one
+	int gameover3; // permanent one
+	char pad03[28];
 	int time;
 	int rotationRadiusAdjust;
 	char pad1[18];
 	int prevRank;
 	int rank;
 };
+
 
 struct gamestate_sub
 {
