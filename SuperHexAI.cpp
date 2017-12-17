@@ -11,6 +11,30 @@ int section(int s, int i)
 	return (int)(360 / s * (i + 0.5));
 }
 
+int hedge = 50;
+int hedge2 = 50;
+
+int ceilings[6];
+int floors[6];
+int prevBestPos;
+
+float evaluateCandPos(int candPos, int curPos, int dir, int sides) {
+	int startCeiling = ceilings[curPos];
+	int penalty = 0;
+	for (; curPos != candPos; curPos = (curPos + dir + sides) % sides) {
+		if (floors[(curPos + dir + sides) % sides] + hedge2 > ceilings[curPos]) {// not possible to move there coz of obstruction
+			printf("HI IM GAY %d %d %d %d %d\n", ceilings[curPos], floors[(curPos + dir + sides) % sides], curPos, dir, (curPos + dir + sides) % sides);
+			penalty += 100;
+		}
+		if (floors[curPos] + hedge > ceilings[(curPos + dir + sides) % sides]) {// not possible to move coz its too tight 
+			printf("HI IM QUEER %d %d %d\n", floors[curPos], ceilings[(curPos + dir + sides) % sides], curPos);
+			penalty += 100;
+		}
+		penalty += 10;
+	}
+	return ceilings[candPos] - startCeiling - penalty;
+}
+
 int main()
 {
 	DWORD dwPid = getPID(L"superhexagon.exe");
@@ -62,71 +86,74 @@ int main()
 		int sides = superhex.gamestate.axisCount;
 		float playerSection = (superhex.gamestate.playerRotation + superhex.gamestate.velocity) * sides / 360.f;
 
-		int distances[6];
 		for (int i = 0; i < sides; i++)
-			distances[i] = 999999;
+			floors[i] = 150;
+		for (int i = 0; i < sides; i++)
+			ceilings[i] = 999999;
+
 		for (int i = 0; i < superhex.gamestate.wallCnt; i++)
 		{
 			wall_t wall = superhex.gamestate.walls[i];
 			if (!wall.checkCollisions)
 				continue;
-			int farDist = wall.distance + wall.width; // wall range from wall.distance to wall.distance + width
-			// 150 is critical distance
-			if (wall.distance <= 150 && farDist >= 150) // second conditional redundant tbh; width always >0
+			int section = wall.section;
+
+			int startDist = wall.distance;
+			int endDist = wall.distance = wall.width;
+			if (startDist <= 150 && endDist > floors[section] && startDist ) // obstruction
 			{
-				distances[wall.section] = 150; // its impeded do not go here.
+				floors[section] = endDist;
 			}
-			else if (wall.distance < distances[wall.section])
+			else if (startDist < ceilings[section])
 			{
-				distances[wall.section] = wall.distance;
+				ceilings[section] = startDist;
 			}
 		}
-
-		float best = -1;
-		int dist = -1;
-		printf("%d ", (int)playerSection);
+		system("clear");
 		for (int i = 0; i < sides; i++)
-		{
-			//if (distances[i] == 999999) // no walls found in this section, let's go here!
-			//{
-			//	best = i + 0.5f;
-			//	break;
-			//}
-			float ccwDist = fmodf(i + .5f - playerSection, sides); // sections numbered counterclockwise
-			float cwDist = fmodf(playerSection - i - .5f, sides);
-			if (ccwDist < 0.f) ccwDist += 6.f; // are you fucking kidding me
-			if (cwDist < 0.f) cwDist += 6.f;
-			int weightedDist = distances[i] - fminf(ccwDist, cwDist);
-			printf("%d ", (int)fminf(ccwDist, cwDist));
-			if (best == -0.5f || weightedDist > dist)// || (delta == 0 && fmodf(i - playerSection, 6.f) < fmodf(best - playerSection, 6.f)))
-			{
-				dist = weightedDist;
-				best = i + 0.5f;
-			}
-		}	
+			printf("%d.%d ", floors[i], ceilings[i]);
 		printf("\n");
-		//WPM_val(pSuperhex + offsetof(struct superhex, gamestate.baseRotation), 0);
-		if (best != -0.5f && fabsf(best - playerSection) > 0.1f)
+
+		int bestPos = playerSection;
+		float bestScore = 0;
+		int bestDir = 0;
+		bool fuckingGay = true;
+		for (int i = 0; i < sides; i++) {
+			for (int dir = -1; dir < 2; dir++) {
+				if (dir != 0) {
+					float score = evaluateCandPos(i, playerSection, dir, sides);
+					if (score > bestScore)
+					{
+						bestScore = score;
+						bestDir = dir;
+						bestPos = i;
+					}
+					if (score != 0 && score != -9998 && score != -9999)
+						fuckingGay = false;
+					printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score);
+				}
+			}
+		}
+		printf("%d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
+		//if (prevBestPos != 0 && bestDir == 0 && fuckingGay)
+		//	break;
+		prevBestPos = bestDir;
+
+		if (bestDir == 1)
 		{
-			float ccwDist = fmodf(best - playerSection, 6.f); // sections numbered counterclockwise
-			float cwDist = fmodf(playerSection - best, 6.f);
-			if (ccwDist < 0.f) ccwDist += 6.f; // are you fucking kidding me
-			if (cwDist < 0.f) cwDist += 6.f;
-			if (cwDist <= ccwDist) // r = clockwise, l = CCW
-			{
-				rDown = true;
-				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)1);
-				if (lDown)
-					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
-			}
-			else
-			{
-				lDown = true;
-				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)1);
-				if (rDown)
-					WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
-			}
-			
+			lDown = true;
+			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)1);
+			if (rDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+			rDown = false;
+		}
+		else if (bestDir == -1)
+		{
+			rDown = true;
+			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)1);
+			if (lDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+			lDown = false;
 		}
 		else
 		{
@@ -134,8 +161,9 @@ int main()
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
 			if (rDown)
 				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+			lDown = false;
+			rDown = false;
 		}
-		Sleep(5);
 	}
 
 	CloseHandle(hProcess);
