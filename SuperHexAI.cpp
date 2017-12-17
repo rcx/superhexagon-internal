@@ -11,26 +11,26 @@ int section(int s, int i)
 	return (int)(360 / s * (i + 0.5));
 }
 
-int hedge = 50;
-int hedge2 = 50;
+int playerVel = 0;
+int hedge2 = 0;
 
 int ceilings[6];
 int floors[6];
 int prevBestPos;
 
-float evaluateCandPos(int candPos, int curPos, int dir, int sides) {
+float evaluateCandPos(int candPos, int curPos, int dir, int sides, int hedge) {
 	int startCeiling = ceilings[curPos];
 	int penalty = 0;
 	for (; curPos != candPos; curPos = (curPos + dir + sides) % sides) {
 		if (floors[(curPos + dir + sides) % sides] + hedge2 > ceilings[curPos]) {// not possible to move there coz of obstruction
-			printf("HI IM GAY %d %d %d %d %d\n", ceilings[curPos], floors[(curPos + dir + sides) % sides], curPos, dir, (curPos + dir + sides) % sides);
-			penalty += 100;
+			printf("obstruction\t%d > %d @ %d via %d %d\n", floors[(curPos + dir + sides) % sides], ceilings[curPos], curPos, dir);
+			penalty += 6 * (floors[(curPos + dir + sides) % sides] - ceilings[curPos]);
 		}
 		if (floors[curPos] + hedge > ceilings[(curPos + dir + sides) % sides]) {// not possible to move coz its too tight 
-			printf("HI IM QUEER %d %d %d\n", floors[curPos], ceilings[(curPos + dir + sides) % sides], curPos);
-			penalty += 100;
+			printf("too tight\t%d > %d @ %d via %d\n", floors[curPos], ceilings[(curPos + dir + sides) % sides], curPos, dir);
+			penalty += 4 * (floors[curPos] + hedge - ceilings[(curPos + dir + sides) % sides]);
 		}
-		penalty += 10;
+		penalty += 30;
 	}
 	return ceilings[candPos] - startCeiling - penalty;
 }
@@ -82,14 +82,24 @@ int main()
 			Sleep(100);
 			continue;
 		}
-
+		//printf("\n\n\n\n\n\n");
 		int sides = superhex.gamestate.axisCount;
-		float playerSection = (superhex.gamestate.playerRotation + superhex.gamestate.velocity) * sides / 360.f;
+		float playerSection = (superhex.gamestate.playerRotation) * sides / 360.f;
+
+		int maxDist = 145 - superhex.gamestate.maxDist; // distance below which walls no longer hurt us
 
 		for (int i = 0; i < sides; i++)
-			floors[i] = 150;
+			floors[i] = maxDist;
 		for (int i = 0; i < sides; i++)
 			ceilings[i] = 999999;
+
+		for (int i = 0; i < superhex.gamestate.wallCnt; i++)
+		{
+			//if (superhex.gamestate.walls[i].section == 0)
+			//	WPM_val(pSuperhex + offsetof(superhex_t, gamestate.walls[i].width), 10000);
+			//if (superhex.gamestate.walls[i].section == 1)
+			//	WPM_val(pSuperhex + offsetof(superhex_t, gamestate.walls[i].checkCollisions), 0);
+		}
 
 		for (int i = 0; i < superhex.gamestate.wallCnt; i++)
 		{
@@ -99,17 +109,20 @@ int main()
 			int section = wall.section;
 
 			int startDist = wall.distance;
-			int endDist = wall.distance = wall.width;
-			if (startDist <= 150 && endDist > floors[section] && startDist ) // obstruction
+			int endDist = wall.distance + wall.width;
+			if (startDist <= floors[section] && endDist > floors[section]) // obstruction
 			{
 				floors[section] = endDist;
 			}
-			else if (startDist < ceilings[section])
+			if (startDist < ceilings[section] && wall.distance > 0 && startDist > maxDist)
 			{
 				ceilings[section] = startDist;
 			}
 		}
-		system("clear");
+
+		//system("clear");
+		int hedge = 360 / sides / superhex.gamestate.
+		printf("<%d> ", maxDist);
 		for (int i = 0; i < sides; i++)
 			printf("%d.%d ", floors[i], ceilings[i]);
 		printf("\n");
@@ -130,14 +143,25 @@ int main()
 					}
 					if (score != 0 && score != -9998 && score != -9999)
 						fuckingGay = false;
-					printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score);
+					printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score, hedge);
 				}
 			}
 		}
-		printf("%d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
+		printf("*** %d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
 		//if (prevBestPos != 0 && bestDir == 0 && fuckingGay)
 		//	break;
 		prevBestPos = bestDir;
+
+		if (bestDir == 0) {
+			float thang = fmodf(playerSection, 1.f)-.5f;
+			//printf("%f\n", thang);
+			if (thang > .1f) {
+				bestDir = -1;
+			}
+			else if (thang < -.1f) {
+				bestDir = 1;
+			}
+		}
 
 		if (bestDir == 1)
 		{
@@ -157,13 +181,12 @@ int main()
 		}
 		else
 		{
-			if (lDown)
-				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
-			if (rDown)
-				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
 			lDown = false;
 			rDown = false;
 		}
+		Sleep(5);
 	}
 
 	CloseHandle(hProcess);
