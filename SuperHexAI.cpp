@@ -11,7 +11,6 @@ int section(int s, int i)
 	return (int)(360 / s * (i + 0.5));
 }
 
-int playerVel = 0;
 int hedge2 = 0;
 
 int ceilings[6];
@@ -23,11 +22,11 @@ float evaluateCandPos(int candPos, int curPos, int dir, int sides, int hedge) {
 	int penalty = 0;
 	for (; curPos != candPos; curPos = (curPos + dir + sides) % sides) {
 		if (floors[(curPos + dir + sides) % sides] + hedge2 > ceilings[curPos]) {// not possible to move there coz of obstruction
-			printf("obstruction\t%d > %d @ %d via %d %d\n", floors[(curPos + dir + sides) % sides], ceilings[curPos], curPos, dir);
+			//printf("obstruction\t%d > %d @ %d via %d %d\n", floors[(curPos + dir + sides) % sides], ceilings[curPos], curPos, dir);
 			penalty += 6 * (floors[(curPos + dir + sides) % sides] - ceilings[curPos]);
 		}
 		if (floors[curPos] + hedge > ceilings[(curPos + dir + sides) % sides]) {// not possible to move coz its too tight 
-			printf("too tight\t%d > %d @ %d via %d\n", floors[curPos], ceilings[(curPos + dir + sides) % sides], curPos, dir);
+			//printf("too tight\t%d > %d @ %d via %d\n", floors[curPos], ceilings[(curPos + dir + sides) % sides], curPos, dir);
 			penalty += 4 * (floors[curPos] + hedge - ceilings[(curPos + dir + sides) % sides]);
 		}
 		penalty += 30;
@@ -72,7 +71,7 @@ int main()
 	bool lDown, rDown;
 	while (true)
 	{
-		WPM_val(pSuperhex + offsetof(superhex_t, gamestate.baseRotation), 0);
+		//WPM_val(pSuperhex + offsetof(superhex_t, gamestate.baseRotation), 0);
 		if (GetAsyncKeyState(VK_F7)) 
 			break;
 		superhex_t superhex;
@@ -86,7 +85,7 @@ int main()
 		int sides = superhex.gamestate.axisCount;
 		float playerSection = (superhex.gamestate.playerRotation) * sides / 360.f;
 
-		int maxDist = 145 - superhex.gamestate.maxDist; // distance below which walls no longer hurt us
+		int maxDist = 145 - superhex.gamestate.wallSpeed; // distance below which walls no longer hurt us
 
 		for (int i = 0; i < sides; i++)
 			floors[i] = maxDist;
@@ -98,13 +97,13 @@ int main()
 			//if (superhex.gamestate.walls[i].section == 0)
 			//	WPM_val(pSuperhex + offsetof(superhex_t, gamestate.walls[i].width), 10000);
 			//if (superhex.gamestate.walls[i].section == 1)
-			//	WPM_val(pSuperhex + offsetof(superhex_t, gamestate.walls[i].checkCollisions), 0);
+			//	WPM_val(pSuperhex + offsetof(superhex_t, gamestate.walls[i].enabled), 0);
 		}
 
 		for (int i = 0; i < superhex.gamestate.wallCnt; i++)
 		{
 			wall_t wall = superhex.gamestate.walls[i];
-			if (!wall.checkCollisions)
+			if (!wall.enabled)
 				continue;
 			int section = wall.section;
 
@@ -121,11 +120,11 @@ int main()
 		}
 
 		//system("clear");
-		int hedge = 360 / sides / superhex.gamestate.
-		printf("<%d> ", maxDist);
-		for (int i = 0; i < sides; i++)
-			printf("%d.%d ", floors[i], ceilings[i]);
-		printf("\n");
+		int hedge = maxDist * (360 / sides / 10) + 50; // min space required to fit thru section
+		//printf("<%d> <%d> ", maxDist, hedge);
+		//for (int i = 0; i < sides; i++)
+			//printf("%d.%d ", floors[i], ceilings[i]);
+		//printf("\n");
 
 		int bestPos = playerSection;
 		float bestScore = 0;
@@ -134,7 +133,7 @@ int main()
 		for (int i = 0; i < sides; i++) {
 			for (int dir = -1; dir < 2; dir++) {
 				if (dir != 0) {
-					float score = evaluateCandPos(i, playerSection, dir, sides);
+					float score = evaluateCandPos(i, playerSection, dir, sides, hedge);
 					if (score > bestScore)
 					{
 						bestScore = score;
@@ -143,11 +142,11 @@ int main()
 					}
 					if (score != 0 && score != -9998 && score != -9999)
 						fuckingGay = false;
-					printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score, hedge);
+					//printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score);
 				}
 			}
 		}
-		printf("*** %d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
+		//printf("*** %d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
 		//if (prevBestPos != 0 && bestDir == 0 && fuckingGay)
 		//	break;
 		prevBestPos = bestDir;
@@ -181,12 +180,14 @@ int main()
 		}
 		else
 		{
-			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
-			WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
+			if (lDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + LeftArrow, (char)0);
+			if (rDown)
+				WPM_val(pSuperhex + offsetof(superhex_t, buttonStates) + RightArrow, (char)0);
 			lDown = false;
 			rDown = false;
 		}
-		Sleep(5);
+		Sleep(3);
 	}
 
 	CloseHandle(hProcess);
