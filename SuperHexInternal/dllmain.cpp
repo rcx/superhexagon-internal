@@ -60,7 +60,7 @@ void Init()
 	pSuperhex = *ppSuperhex;
 	printf("pSuperhex = %p (superhex+%p)\n", pSuperhex, pSuperhex - (DWORD)hSuperhex);
 
-	hkCreateMove = new CVMTHook(pSuperhex);
+	hkCreateMove = new CVMTHook(pSuperhex, 19);
 	pMainLoop = (MainLoop)hkCreateMove->HookVfunc(5, (DWORD)cbMainLoop);
 	printf("MainLoop originally = %p\n", pMainLoop);
 

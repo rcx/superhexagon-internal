@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "CVMTHook.h"
 
+// badly needs to be rewritten
 CVMTHook::CVMTHook()
 {
 }
 
-CVMTHook::CVMTHook(void* pClass)
+CVMTHook::CVMTHook(void* pClass, int vmtLength)
 {
 	// Store pointer to class, which is also the pointer to its current VMT
 	m_pClassVMT = (PDWORD*) pClass;
@@ -14,9 +15,7 @@ CVMTHook::CVMTHook(void* pClass)
 	m_vmtOld = *m_pClassVMT;
 
 	// Walk the VMT to count how many functions there are.
-	m_nFuncs = 0;
-	while (m_vmtOld[m_nFuncs] && !IsBadCodePtr((FARPROC)m_vmtOld[m_nFuncs]))
-		m_nFuncs++;
+	m_nFuncs = vmtLength;
 
 	// Copy old vmt to our new copy
 	m_vmtNew = new DWORD[m_nFuncs];

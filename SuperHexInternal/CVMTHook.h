@@ -15,7 +15,7 @@ class CVMTHook
 
 public:
 	CVMTHook();
-	CVMTHook(void* pClass);
+	CVMTHook(void* pClass, int vmtLength);
 	~CVMTHook();
 
 	void ApplyHook();
