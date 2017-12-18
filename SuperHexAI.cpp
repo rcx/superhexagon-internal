@@ -121,10 +121,10 @@ int main()
 
 		//system("clear");
 		int hedge = maxDist * (360 / sides / 10) + 50; // min space required to fit thru section
-		//printf("<%d> <%d> ", maxDist, hedge);
-		//for (int i = 0; i < sides; i++)
-			//printf("%d.%d ", floors[i], ceilings[i]);
-		//printf("\n");
+		printf("<%d> <%d> ", maxDist, hedge);
+		for (int i = 0; i < sides; i++)
+			printf("%d.%d ", floors[i], ceilings[i]);
+		printf("\n");
 
 		int bestPos = playerSection;
 		float bestScore = 0;

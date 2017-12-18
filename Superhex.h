@@ -5,8 +5,8 @@ struct wall_t
 	int section;
 	int distance;
 	int width;
-	int zero;
-	int checkCollisions;
+	int mystery;
+	int enabled;
 };
 
 struct gamestate_t
@@ -51,7 +51,7 @@ struct gamestate_t
 	char pad021[20];
 	int wallCnt;
 	char pad022[20];
-	int maxDist;
+	int wallSpeed;
 	char pad023[8];
 	int playerRotation;
 	int playerRotation2;
