@@ -3,7 +3,6 @@
 #include "process.h"
 #include "Superhex.h"
 
-// fuck me sideways
 #define fail(...) {fprintf(stderr, __VA_ARGS__); system("pause"); return 1;}
 
 int section(int s, int i)
@@ -129,7 +128,6 @@ int main()
 		int bestPos = playerSection;
 		float bestScore = 0;
 		int bestDir = 0;
-		bool fuckingGay = true;
 		for (int i = 0; i < sides; i++) {
 			for (int dir = -1; dir < 2; dir++) {
 				if (dir != 0) {
@@ -140,15 +138,11 @@ int main()
 						bestDir = dir;
 						bestPos = i;
 					}
-					if (score != 0 && score != -9998 && score != -9999)
-						fuckingGay = false;
 					//printf("%d\t%d\t%d\t%f%\n", (int)playerSection, i, dir, score);
 				}
 			}
 		}
 		//printf("*** %d\t%d\t%d\t%f%\n", (int)playerSection, bestPos, bestDir, bestScore);
-		//if (prevBestPos != 0 && bestDir == 0 && fuckingGay)
-		//	break;
 		prevBestPos = bestDir;
 
 		if (bestDir == 0) {

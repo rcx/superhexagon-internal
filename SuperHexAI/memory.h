@@ -6,8 +6,7 @@
 #define WPM_buf(addr, buf) WriteProcessMemory(hProcess, (LPVOID)(addr), buf, sizeof(buf), NULL)
 #define WPM_val(addr, val) { auto lmao = val; WriteProcessMemory(hProcess, (LPVOID)(addr), &lmao, sizeof(val), NULL); }
 
-// yea i actually give no fucks, im going to define function bodies in header files because screw it
-// whats_performance
+// im going to define function bodies in header files because screw it
 DWORD FindPattern(HANDLE hProcess, DWORD dwBase, DWORD dwScanLen, LPCSTR szPattern, LPCSTR szMask)
 {
 	char buf[1024];
