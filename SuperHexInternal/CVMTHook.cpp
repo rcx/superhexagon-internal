@@ -14,7 +14,6 @@ CVMTHook::CVMTHook(void* pClass, int vmtLength)
 	// Store the pointer to the original VMT
 	m_vmtOld = *m_pClassVMT;
 
-	// Walk the VMT to count how many functions there are.
 	m_nFuncs = vmtLength;
 
 	// Copy old vmt to our new copy

@@ -33,6 +33,7 @@ void AiOnTick(CSuperhex* pSuperhex)
 	if ((pSuperhex->gamestate.stage == 1 && pSuperhex->gamestate.gameover == 2) || pSuperhex->gamestate.stage == -1)
 		return;
 
+	// debug cheat, disable rotation
 	pSuperhex->gamestate.baseRotation = 0;
 	pSuperhex->gamestate.oscillator = 0;
 	pSuperhex->gamestate.oscillator2 = 0;
@@ -112,19 +113,6 @@ void AiOnTick(CSuperhex* pSuperhex)
 	}
 
 	// move
-	if (bestDir == 1)
-	{
-		pSuperhex->buttonStates[LeftArrow] = 1;
-		pSuperhex->buttonStates[RightArrow] = 0;
-	}
-	else if (bestDir == -1)
-	{
-		pSuperhex->buttonStates[RightArrow] = 1;
-		pSuperhex->buttonStates[LeftArrow] = 0;
-	}
-	else
-	{
-		pSuperhex->buttonStates[LeftArrow] = 0;
-		pSuperhex->buttonStates[RightArrow] = 0;
-	}
+	pSuperhex->buttonStates[LeftArrow] = bestDir == 1;
+	pSuperhex->buttonStates[RightArrow] = bestDir == -1;
 }

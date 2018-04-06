@@ -60,7 +60,7 @@ struct gamestate_t
 	int velocity;
 	int pad;
 	int gameover2; // immediate one
-	int stage; // permanent one also it is fuckin weird
+	int stage; // permanent one also it is weird
 	char pad03[28];
 	int time;
 	int rotationRadiusAdjust;

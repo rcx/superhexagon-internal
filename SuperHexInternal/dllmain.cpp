@@ -54,8 +54,7 @@ void Init()
 		return;
 	}
 
-	CSuperhex **ppSuperhex;
-	ppSuperhex = *(CSuperhex***)(dwSigLoc + 0xD);
+	CSuperhex **ppSuperhex = *(CSuperhex***)(dwSigLoc + 0xD);
 	printf("ppSuperhex = %p\n", ppSuperhex);
 	pSuperhex = *ppSuperhex;
 	printf("pSuperhex = %p (superhex+%p)\n", pSuperhex, pSuperhex - (DWORD)hSuperhex);
